@@ -20,6 +20,11 @@ contract MinimalAccount is IAccount , Ownable {
         _;
     }
 
+    modifier requireownerorEntryPoint() {
+        require(msg.sender == owner() || msg.sender == address(i_entryPoint), "only EntryPoint or owner can call this function");
+        _;
+    }
+
     constructor( address entrypoint ) Ownable(msg.sender){
         i_entryPoint = IEntryPoint(entrypoint);
     }
@@ -54,6 +59,17 @@ contract MinimalAccount is IAccount , Ownable {
 
     function getEntrypoint() external view returns (address) {
         return address(i_entryPoint);
+    }
+
+    function execute(address dest, uint256 value , bytes calldata func) external requireownerorEntryPoint returns (bool success) {
+        (bool success,bytes memory result ) = dest.call{value: value}(func);
+        if(!success) {
+            revert();
+        }
+    }
+
+    function recieve() external payable {
+        // This function is empty, but it allows the contract to receive Ether.
     }
 
 }
